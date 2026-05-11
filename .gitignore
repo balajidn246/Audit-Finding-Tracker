@@ -20,6 +20,7 @@ ai-service/venv/
 ai-service/*.egg-info/
 ai-service/.pytest_cache/
 ai-service/chroma_data/
+ai-service/.env
 
 # IDE
 .vscode/
