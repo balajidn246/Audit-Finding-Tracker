@@ -54,6 +54,11 @@
       <artifactId>spring-boot-starter-mail</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-thymeleaf</artifactId>
+    </dependency>
+
     <!-- Validation and utilities -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -103,6 +108,13 @@
       <artifactId>jjwt-jackson</artifactId>
       <version>${jjwt.version}</version>
       <scope>runtime</scope>
+    </dependency>
+
+    <!-- Bucket4j for rate limiting -->
+    <dependency>
+      <groupId>com.github.vladimir-bukhtoyarov</groupId>
+      <artifactId>bucket4j-core</artifactId>
+      <version>8.1.0</version>
     </dependency>
 
     <!-- UUID generation -->
