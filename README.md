@@ -1,189 +1,158 @@
 # Audit Finding Tracker
 
-An AI-powered enterprise audit management platform built with Spring Boot, React, and Python Flask.
+## Overview
 
-## 🎯 Project Overview
+Audit Finding Tracker is an **industry-level AI-powered audit management platform** designed for enterprises to manage, track, and analyze audit findings with intelligent recommendations and comprehensive reporting.
 
-Audit Finding Tracker is a comprehensive solution for managing audit findings with AI-powered insights, RAG-based document querying, real-time analytics, and automated notifications.
+## Key Features
 
-### Key Features
+✅ **AI-Powered Insights**
+- Automatic finding descriptions using Groq LLaMA-3.3-70b
+- AI-generated recommendations
+- Intelligent categorization
+- RAG-based document querying
 
-✅ **AI-Powered Analysis**
-- Auto-generated finding descriptions using Groq LLaMA-3.3-70b
-- AI recommendations for remediation
-- Document analysis with RAG (Retrieval-Augmented Generation)
-- Category classification with confidence scores
-
-✅ **Audit Management**
-- Create, read, update, soft-delete findings
-- Track severity levels and status
-- Advanced search and filtering
-- Pagination and sorting
+✅ **Comprehensive Tracking**
+- Create, update, and manage audit findings
+- Track status and severity levels
+- Soft delete with audit trail
+- Full change history
 
 ✅ **Analytics & Reporting**
-- Real-time dashboard with metrics
-- Interactive charts (Recharts)
-- AI-generated audit reports
-- CSV/PDF export functionality
+- Real-time analytics dashboards
+- AI-generated comprehensive reports
+- CSV export functionality
+- Custom filters and search
 
-✅ **Security & Authentication**
+✅ **Enterprise Security**
 - JWT-based authentication
-- Role-Based Access Control (Admin, Manager, Viewer)
+- Role-based access control (RBAC)
 - OWASP Top 10 protection
-- Audit logging for compliance
+- Audit logging of all changes
+- Secure password hashing
 
-✅ **Notifications**
-- Email alerts for overdue findings
-- Daily reminders
-- Weekly summary reports
+✅ **DevOps Ready**
+- Docker & Docker Compose
+- Kubernetes-ready
+- Health checks
+- Prometheus metrics
+- Scalable architecture
 
-✅ **Performance**
-- Redis caching (10-min TTL)
-- Database indexing
-- Connection pooling
-
-## 🏗️ Architecture
-
-```
-┌─────────────────┐         ┌──────────────────┐         ┌─────────────────┐
-│  React 18 App   │◄─────► │ Spring Boot 3.x  │◄─────► │  PostgreSQL 15  │
-│  (Vite + TW)    │  REST   │   (Java 17)      │  JDBC   │                 │
-└─────────────────┘         └──────────────────┘         └─────────────────┘
-         │                           │                            ▲
-         │                           │                            │
-         │                           ├─────────────────────┬──────┘
-         │                           │                     │
-         │                      ┌────▼─────┐        ┌──────▼──────┐
-         │                      │  Redis   │        │   Flyway    │
-         │                      │  Cache   │        │ Migrations  │
-         │                      └──────────┘        └─────────────┘
-         │
-         └──────────────────┐
-                           │
-                    ┌──────▼──────────┐
-                    │ Flask AI Service │
-                    │ (Python 3.11)   │
-                    ├──────────────────┤
-                    │ Groq LLM API    │
-                    │ ChromaDB + RAG  │
-                    │ Embeddings      │
-                    └──────────────────┘
-```
-
-## 📋 Tech Stack
+## Tech Stack
 
 ### Backend
-- **Java 17** + **Spring Boot 3.2.4**
-- **Spring Security** with JWT
-- **PostgreSQL 15** (RDBMS)
-- **Redis 7** (Caching)
-- **Flyway** (Database Migrations)
-- **Swagger/OpenAPI 3.0** (API Docs)
-- **JUnit 5** + **Mockito** (Testing)
+- **Java 17** + **Spring Boot 3.x**
+- **PostgreSQL 15** for data persistence
+- **Redis 7** for caching
+- **JWT** for authentication
+- **Flyway** for database migrations
+- **Swagger/OpenAPI** for API documentation
 
 ### AI Service
 - **Python 3.11** + **Flask 3.x**
-- **Groq API** (LLaMA-3.3-70b)
-- **ChromaDB** (Vector Database)
-- **sentence-transformers** (Embeddings)
-- **flask-limiter** (Rate Limiting)
+- **Groq API** (LLaMA-3.3-70b model)
+- **ChromaDB** for vector storage
+- **sentence-transformers** for embeddings
+- **flask-limiter** for rate limiting
 
 ### Frontend
 - **React 18** + **Vite**
-- **Tailwind CSS 3** (Styling)
-- **Axios** (HTTP Client)
-- **Recharts** (Data Visualization)
-- **React Router v6** (Navigation)
+- **Tailwind CSS** for styling
+- **Axios** for API calls
+- **Recharts** for analytics
 
 ### DevOps
-- **Docker** & **Docker Compose**
-- Multi-container orchestration
-- Health checks & auto-restart
+- **Docker** containers
+- **Docker Compose** orchestration
+- Production-grade configuration
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 audit-finding-tracker/
-├── backend/                          # Spring Boot Application
+├── backend/                          # Spring Boot application
 │   ├── src/main/java/com/internship/tool/
-│   │   ├── AuditTrackerApplication.java
-│   │   ├── controller/              # REST Controllers
-│   │   ├── service/                 # Business Logic
-│   │   ├── repository/              # JPA Repositories
-│   │   ├── entity/                  # JPA Entities
-│   │   ├── dto/                     # Data Transfer Objects
-│   │   ├── config/                  # Spring Configuration
-│   │   ├── exception/               # Custom Exceptions
-│   │   ├── scheduler/               # Scheduled Tasks
-│   │   └── security/                # Security Config
+│   │   ├── controller/              # REST endpoints
+│   │   ├── service/                 # Business logic
+│   │   ├── repository/              # Data access
+│   │   ├── entity/                  # JPA entities
+│   │   ├── dto/                     # Data transfer objects
+│   │   ├── config/                  # Spring configuration
+│   │   ├── exception/               # Exception handling
+│   │   ├── security/                # JWT & security
+│   │   ├── scheduler/               # Scheduled tasks
+│   │   └── audit/                   # Audit logging
 │   ├── src/main/resources/
-│   │   ├── db/migration/            # Flyway SQL
-│   │   ├── templates/               # Email Templates
+│   │   ├── db/migration/            # Flyway migrations
+│   │   ├── templates/               # Email templates
 │   │   └── application.yml          # Configuration
-│   ├── src/test/java/              # Unit & Integration Tests
-│   └── pom.xml                      # Maven Dependencies
+│   ├── src/test/java/               # Unit & integration tests
+│   └── pom.xml                      # Maven configuration
 │
-├── ai-service/                      # Flask AI Microservice
-│   ├── routes/                      # API Endpoints
-│   ├── services/                    # AI Logic
-│   ├── prompts/                     # LLM Prompts
-│   ├── app.py                       # Flask App
-│   ├── requirements.txt             # Python Dependencies
-│   ├── Dockerfile                   # Container Config
-│   └── .env                         # Environment Variables
+├── ai-service/                       # Flask AI microservice
+│   ├── routes/                      # API endpoints
+│   ├── services/                    # AI logic
+│   ├── prompts/                     # Prompt templates
+│   ├── app.py                       # Flask app
+│   ├── requirements.txt             # Python dependencies
+│   ├── Dockerfile                   # Container image
+│   └── tests/                       # Unit tests
 │
-├── frontend/                        # React Application
+├── frontend/                         # React application
 │   ├── src/
-│   │   ├── components/              # Reusable Components
-│   │   ├── pages/                   # Page Components
-│   │   ├── services/                # API Services
-│   │   ├── hooks/                   # Custom Hooks
-│   │   ├── context/                 # Context API
-│   │   ├── App.jsx                  # Root Component
-│   │   └── main.jsx                 # Entry Point
-│   ├── package.json                 # NPM Dependencies
-│   ├── vite.config.js              # Vite Config
-│   └── tailwind.config.js           # Tailwind Config
+│   │   ├── components/              # Reusable components
+│   │   ├── pages/                   # Page components
+│   │   ├── services/                # API services
+│   │   ├── hooks/                   # Custom React hooks
+│   │   ├── context/                 # Context providers
+│   │   ├── utils/                   # Utility functions
+│   │   └── App.jsx                  # Main app component
+│   ├── package.json                 # NPM configuration
+│   ├── vite.config.js               # Vite configuration
+│   └── Dockerfile                   # Container image
 │
-├── docker-compose.yml              # Multi-container Setup
-├── .env.example                    # Environment Template
-├── README.md                       # This File
-└── SECURITY.md                     # Security Documentation
+├── docker-compose.yml               # Multi-container setup
+├── .env.example                     # Environment template
+├── SECURITY.md                      # Security documentation
+└── README.md                        # This file
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 - Docker & Docker Compose
-- Java 17+ (for local backend dev)
-- Node.js 18+ (for local frontend dev)
-- Python 3.11+ (for local AI service dev)
+- Git
+- Node.js 18+ (for local frontend development)
+- Java 17+ (for local backend development)
+- Python 3.11+ (for local AI service development)
 
-### Option 1: Docker Compose (Recommended)
+### Using Docker Compose (Recommended)
 
 ```bash
-# Clone repository
+# Clone the repository
 git clone https://github.com/balajidn246/audit-finding-tracker.git
 cd audit-finding-tracker
 
-# Setup environment
+# Copy environment template
 cp .env.example .env
-# Edit .env with your values (Groq API Key, etc.)
+
+# Update .env with your configuration (especially JWT_SECRET_KEY and GROQ_API_KEY)
+vim .env
 
 # Start all services
 docker-compose up -d
 
-# Wait for services to be healthy
-docker-compose ps
+# Wait for services to be healthy (30-60 seconds)
+docker-compose logs -f
 
-# Access applications
-- Frontend: http://localhost:3000
-- Backend: http://localhost:8080
-- API Docs: http://localhost:8080/swagger-ui.html
-- AI Service: http://localhost:5000
+# Access the application
+# Frontend: http://localhost:3000
+# Backend API: http://localhost:8080
+# Swagger UI: http://localhost:8080/swagger-ui.html
+# AI Service Health: http://localhost:5000/health
 ```
 
-### Option 2: Local Development
+### Local Development
 
 #### Backend
 ```bash
@@ -196,7 +165,7 @@ mvn spring-boot:run
 ```bash
 cd ai-service
 python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 python app.py
 ```
@@ -208,114 +177,231 @@ npm install
 npm run dev
 ```
 
-## 📖 API Documentation
+## API Endpoints
 
-Interactive Swagger documentation available at:
-```
-http://localhost:8080/swagger-ui.html
-```
-
-### Key Endpoints
-
-**Authentication**
+### Authentication
 - `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login with credentials
-- `POST /api/auth/refresh` - Refresh JWT token
+- `POST /api/auth/login` - Login and get tokens
+- `POST /api/auth/refresh` - Refresh access token
+- `POST /api/auth/logout` - Logout user
 
-**Findings**
-- `GET /api/findings` - List all findings (paginated)
+### Audit Findings
+- `GET /api/findings` - List all findings (paginated, filtered)
 - `POST /api/findings` - Create new finding
 - `GET /api/findings/{id}` - Get finding details
 - `PUT /api/findings/{id}` - Update finding
 - `DELETE /api/findings/{id}` - Soft delete finding
-- `GET /api/findings/search` - Advanced search
-- `GET /api/findings/stats` - Dashboard stats
+- `GET /api/findings/search?query=...` - Search findings
+- `GET /api/findings/stats` - Get statistics
 
-**AI Services**
+### AI Features
 - `POST /api/ai/describe` - Generate description
 - `POST /api/ai/recommend` - Get recommendations
-- `POST /api/ai/categorise` - Classify finding
-- `POST /api/ai/generate-report` - Create AI report
+- `POST /api/ai/categorize` - Categorize finding
+- `POST /api/ai/generate-report` - Generate comprehensive report
+- `POST /api/ai/query-documents` - RAG-based document query
 
-**Reports**
-- `GET /api/reports/export-csv` - Export to CSV
-- `GET /api/reports/export-pdf` - Export to PDF
+### Export
+- `GET /api/export/csv` - Export findings as CSV
+- `GET /api/export/report` - Download generated report
 
-## 🔐 Security Features
+### Analytics
+- `GET /api/analytics/dashboard` - Dashboard metrics
+- `GET /api/analytics/trends` - Trend analysis
+- `GET /api/analytics/by-severity` - Severity breakdown
 
-- ✅ JWT Authentication with refresh tokens
-- ✅ Role-Based Access Control (RBAC)
-- ✅ OWASP Top 10 protection
-- ✅ SQL Injection prevention (Parameterized queries)
-- ✅ XSS protection (Output encoding)
-- ✅ CSRF protection (Spring Security)
-- ✅ Rate limiting (spring-cloud-circuitbreaker)
-- ✅ Input validation & sanitization
-- ✅ Secure password hashing (BCrypt)
-- ✅ Audit logging for compliance
-- ✅ Environment-based secrets management
+### Users (Admin only)
+- `GET /api/users` - List all users
+- `POST /api/users` - Create user
+- `PUT /api/users/{id}` - Update user
+- `DELETE /api/users/{id}` - Delete user
+- `PUT /api/users/{id}/role` - Change user role
 
-See [SECURITY.md](./SECURITY.md) for detailed threat model and mitigations.
+### Audit Logs
+- `GET /api/audit-logs` - List audit logs
+- `GET /api/audit-logs/{id}` - Get specific log
 
-## 📊 Database Schema
+## Authentication & Authorization
+
+### Roles
+- **ADMIN** - Full access, user management, settings
+- **MANAGER** - Create, edit, delete findings, view reports
+- **VIEWER** - View-only access to findings and reports
+
+### JWT Tokens
+- Access Token: Valid for 15 minutes
+- Refresh Token: Valid for 7 days
+- Tokens stored in HTTP-only cookies
+
+## Security Features
+
+✅ **OWASP Top 10 Protection**
+- SQL Injection prevention (PreparedStatements)
+- XSS protection (Content Security Policy headers)
+- CSRF protection (CSRF tokens on state-changing requests)
+- Broken Authentication prevention (JWT + secure password hashing)
+- Sensitive Data Exposure prevention (HTTPS, encryption)
+- XML External Entities (XXE) prevention
+- Broken Access Control (RBAC implementation)
+- Security Misconfiguration prevention
+- Using Components with Known Vulnerabilities (dependency scanning)
+- Insufficient Logging & Monitoring (audit logs)
+
+✅ **Additional Security**
+- JWT with HS512 algorithm
+- BCrypt password hashing
+- Input validation and sanitization
+- Rate limiting (flask-limiter, Spring Security)
+- Security headers (HSTS, X-Content-Type-Options, etc.)
+- Secure cookie configuration
+- Environment-based secrets management
+- File upload restrictions
+- Prompt injection protection
+
+See [SECURITY.md](./SECURITY.md) for detailed security documentation.
+
+## Database Schema
 
 ### Key Tables
-- `users` - User accounts with roles
-- `audit_findings` - Main findings data
-- `audit_logs` - Change tracking for compliance
-- `file_uploads` - Document storage metadata
-- `notifications` - Email notification queue
+- `users` - User accounts
+- `roles` - Role definitions
+- `user_roles` - User-role mapping
+- `findings` - Audit findings
+- `finding_attachments` - File uploads
+- `audit_logs` - Change tracking
+- `email_notifications` - Email queue
+- `ai_cache` - AI response cache
 
-All migrations handled by Flyway in `backend/src/main/resources/db/migration/`
+All tables are created and migrated using Flyway.
 
-## 🧪 Testing
+## Caching Strategy
 
+- **GET requests**: Cached in Redis (TTL: 10 minutes)
+- **AI responses**: Cached separately (TTL: 1 hour)
+- **Cache keys**: Scoped by user to maintain data isolation
+- **Cache invalidation**: Automatic on CREATE/UPDATE/DELETE
+
+## Email Notifications
+
+- Finding created notification
+- Overdue finding alerts (daily at 9 AM)
+- Weekly summary report (Monday at 8 AM)
+- Customizable email templates
+
+## Deployment
+
+### Docker Compose
 ```bash
-# Backend Tests
-cd backend
-mvn test
-
-# Frontend Tests
-cd frontend
-npm test
-
-# AI Service Tests
-cd ai-service
-pytest
+docker-compose -f docker-compose.yml up -d
 ```
 
-## 📈 Performance Metrics
+### Kubernetes
+Helmcharts available in `k8s/` directory (coming soon)
 
-- API Response Time: < 200ms (with caching)
-- Database Queries: Indexed for sub-50ms queries
-- Cache Hit Rate: > 80% on read operations
-- Concurrent Users: 1000+ (load tested)
+### Cloud Platforms
+- AWS ECS/Fargate
+- Google Cloud Run
+- Azure Container Instances
+- DigitalOcean App Platform
 
-## 🔄 CI/CD Pipeline
+## Monitoring & Logging
 
-GitHub Actions workflows for:
-- Automated testing
-- Code quality checks
-- Docker image building
-- Deployment automation
+- **Logs**: Centralized logging with Spring Cloud Config
+- **Metrics**: Micrometer + Prometheus integration
+- **Distributed Tracing**: Spring Cloud Sleuth (optional)
+- **Health Checks**: `/actuator/health` endpoint
 
-## 🤝 Contributing
+## Testing
 
-1. Create a feature branch: `git checkout -b feature/new-feature`
-2. Commit changes: `git commit -m 'Add new feature'`
-3. Push to branch: `git push origin feature/new-feature`
-4. Open a Pull Request
+### Backend
+```bash
+cd backend
+mvn test                              # Unit tests
+mvn verify                            # Integration tests
+mvn clean test -Dtest=*ControllerTest  # Specific test class
+```
 
-## 📝 License
+### Frontend
+```bash
+cd frontend
+npm test                              # Jest tests
+npm run test:coverage                 # Coverage report
+```
+
+### AI Service
+```bash
+cd ai-service
+pytest tests/                         # Run all tests
+pytest tests/ -v --cov                # With coverage
+```
+
+## Performance Optimization
+
+- Database query optimization with indexes
+- Redis caching for frequently accessed data
+- Connection pooling (HikariCP)
+- Pagination for large datasets
+- Lazy loading of related entities
+- AI response caching
+- Frontend code splitting with Vite
+- Image optimization
+
+## Troubleshooting
+
+### Services won't start
+```bash
+# Check logs
+docker-compose logs -f
+
+# Check service status
+docker-compose ps
+
+# Restart services
+docker-compose restart
+```
+
+### Database connection issues
+```bash
+# Verify database is running
+docker-compose logs postgres
+
+# Check database credentials in .env
+cat .env | grep DB_
+```
+
+### AI service errors
+```bash
+# Check AI service logs
+docker-compose logs ai-service
+
+# Verify Groq API key
+echo $GROQ_API_KEY
+
+# Test AI service health
+curl http://localhost:5000/health
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
 
 MIT License - see LICENSE file for details
 
-## 👥 Team
+## Support
 
-**Developed for:** Internship Capstone Project
-**Built with:** ❤️ by AI Engineering Team
+For issues, questions, or suggestions:
+- Open an GitHub Issue
+- Contact: internship@audittracker.com
 
----
+## Acknowledgments
 
-**Last Updated:** 2026-05-11
-**Version:** 1.0.0
+- Spring Boot team
+- Groq AI team
+- React community
+- PostgreSQL team
