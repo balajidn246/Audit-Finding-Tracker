@@ -1,0 +1,55 @@
+# Backend
+backend/target/
+backend/.classpath
+backend/.project
+backend/.settings/
+backend/bin/
+backend/*.jar
+backend/*.war
+backend/.idea/
+backend/*.iml
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+frontend/.env.*.local
+frontend/*.log
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+
+# AI Service
+ai-service/venv/
+ai-service/__pycache__/
+ai-service/*.pyc
+ai-service/*.egg-info/
+ai-service/.pytest_cache/
+ai-service/chroma_data/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+logs/
+*.log
+
+# Docker
+.docker/
+docker-compose.override.yml
