@@ -1,107 +1,256 @@
 # Audit Finding Tracker
 
-This repository contains a production-ready skeleton for the Audit Finding Tracker internship capstone project.
+Audit Finding Tracker is a capstone project for managing audit findings with a Spring Boot backend, an AI service, and a React frontend.
 
-What's included in this commit:
-- Backend Spring Boot 3 (Java 17) skeleton with JWT authentication, security config, and initial entities/repositories.
-- AI microservice (Flask) placeholder with streaming endpoint and health check.
-- Frontend skeleton (Vite + React) with Tailwind-ready structure.
-- Docker Compose file to run backend, postgres, redis, ai-service, and frontend in development.
-- Flyway initial migration script.
-- .env.example and .gitignore
+The project provides a production-style starting point that you can run locally with Docker Compose and extend with your own business features.
 
-Next steps (automated but not yet fully implemented in code in this commit):
-- Implement AuditFinding CRUD controllers, services, Redis caching annotations, File upload API, Email templates and scheduling, Audit logging service.
-- Implement AI service RAG pipeline, Groq integration, ChromaDB persistence, and embeddings.
-- Build frontend pages and integrate with backend APIs.
-- Add comprehensive tests (JUnit + MockMvc) and frontend tests.
-- Security hardening and SECURITY.md (present in repo) to follow.
+## What is included
 
-Run locally:
-1. Copy .env.example to .env and customize.
-2. docker compose up --build
+- **Backend:** Spring Boot 3, Java 17, JWT authentication, security configuration, entities, repositories, and services
+- **AI service:** Flask service with health checks, streaming support, caching, and embedding placeholders
+- **Frontend:** React + Vite application with a Tailwind-ready structure
+- **Database:** PostgreSQL with Flyway migrations
+- **Caching:** Redis
+- **Development environment:** Docker Compose configuration for all services
+- **Security:** `SECURITY.md` with security guidance
 
-Clone the repo (if needed)
+## Project structure
+
+```text
+backend/            Spring Boot API
+ai-service/         Flask AI microservice
+frontend/           React + Vite frontend
+uploads/            File upload directory
+docker-compose.yml  Local development environment
+.env.example        Example environment configuration
+SECURITY.md         Security guidance
+```
+
+## Planned features
+
+The following features are planned or are still being completed:
+
+- Audit finding CRUD APIs
+- Redis caching annotations
+- File upload API
+- Email templates and scheduled notifications
+- Audit logging service
+- AI RAG pipeline, Groq integration, and ChromaDB persistence
+- Frontend pages and backend API integration
+- Comprehensive backend and frontend tests
+- Additional production security hardening
+
+## Quick start with Docker
+
+### Prerequisites
+
+Make sure you have the following installed:
+
+- Git
+- Docker Desktop or Docker Engine with Docker Compose
+- At least 4 GB of memory available to Docker
+
+### 1. Clone the repository
+
+```bash
 git clone https://github.com/balajidn246/Audit-Finding-Tracker.git
 cd Audit-Finding-Tracker
-Prepare environment
-Copy example env:
+```
+
+### 2. Create your environment file
+
+```bash
 cp .env.example .env
-Edit .env and set at minimum:
-JWT_SECRET -> long (>=32 bytes) cryptographic secret
-DB_USERNAME, DB_PASSWORD (if different)
-MAIL_* if you want email
-GROQ_API_KEY if you will enable Groq integration
-Generate a secure JWT_SECRET (example):
+```
+
+Open `.env` and configure the values you need:
+
+- `JWT_SECRET` — a strong secret with at least 32 bytes
+- `DB_USERNAME` and `DB_PASSWORD` — database credentials, if different from the defaults
+- `MAIL_*` — required only if you want email functionality
+- `GROQ_API_KEY` — required only if you enable Groq integration
+
+Generate a secure JWT secret with:
+
+```bash
 openssl rand -base64 48 | tr -d '\n' && echo
-paste result into .env as JWT_SECRET=
-(Optional but recommended) Ensure Docker has enough resources (4+ GB RAM) before building Java image.
+```
 
-Start everything with Docker Compose (recommended)
+Copy the generated value into `.env`:
 
+```env
+JWT_SECRET=your-generated-secret
+```
+
+### 3. Start all services
+
+```bash
 docker compose up --build
-This builds backend, frontend, ai-service, and starts postgres + redis.
-Monitor output for Flyway migrations and health checks.
-Postgres extension (if Flyway complains about gen_random_uuid)
-If you see errors about gen_random_uuid() run:
-docker compose exec postgres psql -U ${DB_USERNAME:-postgres} -d ${DB_NAME:-aft} -c "CREATE EXTENSION IF NOT EXISTS pgcrypto;"
-then restart backend: docker compose restart backend
-Verify services (URLs)
-Backend ping:
+```
+
+This starts the backend, frontend, AI service, PostgreSQL, and Redis.
+
+## Service URLs
+
+| Service | URL |
+| --- | --- |
+| Backend API | `http://localhost:8080` |
+| Swagger UI | `http://localhost:8080/swagger-ui.html` |
+| AI service | `http://localhost:5000` |
+| Frontend | `http://localhost:3000` |
+
+Check the services:
+
+```bash
 curl http://localhost:8080/api/auth/ping
-Swagger UI:
-http://localhost:8080/swagger-ui.html
-AI service:
 curl http://localhost:5000/health
-Frontend (dev/preview):
-If dev server: run npm run dev in frontend or visit mapped port in docker-compose
-In compose file frontend maps 3000: http://localhost:3000
-Run backend locally (alternate to docker)
+```
+
+## Run services without Docker
+
+### Backend
+
+```bash
 cd backend
 ./mvnw clean package -DskipTests
 java -jar target/audit-finding-tracker-1.0.0.jar
-To run tests:
+```
+
+Run backend tests:
+
+```bash
 ./mvnw test
-Run AI service locally (alternate)
+```
+
+### AI service
+
+```bash
 cd ai-service
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 python app.py
-Note: sentence-transformers will download models (network + disk). Adjust memory.
-Run frontend locally (alternate)
+```
+
+> `sentence-transformers` may download models and require additional disk space and memory.
+
+### Frontend
+
+```bash
 cd frontend
 npm install
 npm run dev
-Vite will print the dev URL (e.g., http://localhost:5173) — set VITE_API_BASE_URL to http://localhost:8080/api in .env for local use.
-Quick API examples (replace <token> with accessToken)
-Register: curl -X POST http://localhost:8080/api/auth/register -H "Content-Type: application/json" -d '{"username":"admin2","email":"a2@example.com","password":"ComplexP@ss123"}'
-Login: curl -X POST http://localhost:8080/api/auth/login -H "Content-Type: application/json" -d '{"username":"admin2","password":"ComplexP@ss123"}'
-Create finding: curl -X POST http://localhost:8080/api/findings -H "Authorization: Bearer <token>" -H "Content-Type: application/json" -d '{"title":"Example","description":"Desc"}'
-AI describe (local AI service): curl -X POST http://localhost:5000/describe -H "Content-Type: application/json" -d '{"text":"Some finding text"}'
-Health & logs troubleshooting
-Follow logs:
+```
+
+Vite will display the local development URL, usually `http://localhost:5173`.
+
+For local API calls, set this value in the frontend environment file:
+
+```env
+VITE_API_BASE_URL=http://localhost:8080/api
+```
+
+## API examples
+
+The examples below assume that the backend is running. Replace `<token>` with the `accessToken` returned by the login request.
+
+### Register a user
+
+```bash
+curl -X POST http://localhost:8080/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin2","email":"a2@example.com","password":"ComplexP@ss123"}'
+```
+
+### Log in
+
+```bash
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin2","password":"ComplexP@ss123"}'
+```
+
+### Create an audit finding
+
+```bash
+curl -X POST http://localhost:8080/api/findings \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Example","description":"Desc"}'
+```
+
+### Generate an AI description
+
+```bash
+curl -X POST http://localhost:5000/describe \
+  -H "Content-Type: application/json" \
+  -d '{"text":"Some finding text"}'
+```
+
+## Troubleshooting
+
+### PostgreSQL reports a `gen_random_uuid()` error
+
+Enable the PostgreSQL `pgcrypto` extension:
+
+```bash
+docker compose exec postgres psql \
+  -U ${DB_USERNAME:-postgres} \
+  -d ${DB_NAME:-aft} \
+  -c "CREATE EXTENSION IF NOT EXISTS pgcrypto;"
+```
+
+Restart the backend afterward:
+
+```bash
+docker compose restart backend
+```
+
+### View service logs
+
+```bash
 docker compose logs -f backend
 docker compose logs -f ai-service
-Common issues & fixes:
-Flyway fails -> check DB env and extensions (pgcrypto)
-Maven build OOM in Docker -> build locally or increase Docker memory
-File storage permission errors -> ensure host path (./uploads) writable or change files.upload-dir in .env
-AI model/embedding memory heavy -> use smaller sentence-transformer or run AI service with more memory/CPU
-Security & production notes (do these before production)
-Store JWT_SECRET and sensitive creds in secret manager; never commit to git.
-Use TLS (HTTPS) and place services behind a reverse proxy (nginx, LB).
-Rotate refresh tokens and ensure proper revocation (not yet implemented).
-Add virus scanning (clamav) for file uploads for production.
-Run dependency scanning (Dependabot/Snyk).
-Do pen tests for file upload, auth flows, AI endpoints and prompt-injection testing.
-CI / GitHub Actions
-I can add a GitHub Actions workflow that:
-builds backend, runs unit tests, builds docker images, and (optionally) runs integration tests in a matrix.
-Let me know if you want me to add that to a branch and open a PR.
-What’s already committed
-Full backend code (entities, services, controllers, JWT, Redis caching, Flyway migrations, file storage, email service, scheduling, audit log).
-AI microservice (Flask) with endpoints, caching, Chroma placeholders, sentence-transformers embeddings, SSE streaming, rate limiting.
-Frontend skeleton (Vite + React + Tailwind-ready), JWT Axios interceptor, pages.
-Dockerfiles and docker-compose.yml, .env.example, README.md, SECURITY.md, some tests.
+```
 
+### Common problems
+
+- **Flyway fails:** Check database variables and enable the `pgcrypto` extension.
+- **Docker runs out of memory:** Increase Docker memory or build the backend locally.
+- **File uploads fail:** Make sure the `./uploads` directory is writable.
+- **AI service uses too much memory:** Use a smaller sentence-transformer model or assign more resources to Docker.
+
+## Security and production checklist
+
+Before deploying to production:
+
+- Store `JWT_SECRET` and other credentials in a secret manager.
+- Never commit secrets to Git.
+- Use HTTPS behind a reverse proxy or load balancer.
+- Implement refresh-token rotation and revocation.
+- Add malware scanning for uploaded files.
+- Run dependency scanning with tools such as Dependabot or Snyk.
+- Perform security testing for file uploads, authentication, AI endpoints, and prompt injection.
+
+Read `SECURITY.md` for more information.
+
+## CI / GitHub Actions
+
+A GitHub Actions workflow can be added to:
+
+- Build the backend
+- Run unit tests
+- Build Docker images
+- Run optional integration tests
+
+## Contributing
+
+1. Create a feature branch.
+2. Make your changes.
+3. Run the relevant tests.
+4. Update the documentation when behavior changes.
+5. Open a pull request with a clear description.
+
+## License
+
+No license has been specified yet. Add a license file before distributing or reusing this project publicly.
