@@ -39,3 +39,8 @@ docker-compose.override.yml
 # Logs
 *.log
 logs/
+
+# Local npm cache used for restricted workspaces
+.npm-cache/
+frontend/node_modules/
+frontend/dist/

@@ -1,19 +1,23 @@
 package com.internship.tool.security;
 
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.security.Key;
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.UUID;
 
 @Component
 public class JwtTokenProvider {
-
     @Value("${jwt.secret}")
     private String jwtSecret;
 
@@ -23,55 +27,69 @@ public class JwtTokenProvider {
     @Value("${jwt.refresh-token-expiration-ms}")
     private long refreshTokenValidityInMs;
 
-    private Key key;
+    private SecretKey key;
 
     @PostConstruct
     public void init() {
-        if (jwtSecret == null || jwtSecret.length() < 32) {
-            throw new IllegalStateException("JWT secret must be set and at least 32 characters long");
+        if (jwtSecret == null || jwtSecret.getBytes(StandardCharsets.UTF_8).length < 32) {
+            throw new IllegalStateException("JWT_SECRET must contain at least 32 bytes of unpredictable secret material");
         }
-        key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
+        if (accessTokenValidityInMs < 60_000 || refreshTokenValidityInMs <= accessTokenValidityInMs) {
+            throw new IllegalStateException("JWT token lifetimes are invalid");
+        }
+        key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
     }
 
     public String generateAccessToken(String username, Set<String> roles) {
-        long now = System.currentTimeMillis();
-        Date expiry = new Date(now + accessTokenValidityInMs);
+        Instant now = Instant.now();
         return Jwts.builder()
-                .setSubject(username)
-                .claim("roles", roles.stream().collect(Collectors.joining(",")))
-                .setIssuedAt(new Date(now))
-                .setExpiration(expiry)
-                .signWith(key, SignatureAlgorithm.HS512)
+                .subject(username)
+                .claim("type", "access")
+                .claim("roles", roles)
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(now.plusMillis(accessTokenValidityInMs)))
+                .signWith(key)
                 .compact();
     }
 
     public String generateRefreshToken(String username) {
-        long now = System.currentTimeMillis();
-        Date expiry = new Date(now + refreshTokenValidityInMs);
+        Instant now = Instant.now();
         return Jwts.builder()
-                .setSubject(username)
-                .setIssuedAt(new Date(now))
-                .setExpiration(expiry)
-                .signWith(key, SignatureAlgorithm.HS512)
+                .subject(username)
+                .id(UUID.randomUUID().toString())
+                .claim("type", "refresh")
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(now.plusMillis(refreshTokenValidityInMs)))
+                .signWith(key)
                 .compact();
     }
 
-    public boolean validateToken(String token) {
+    public String getTokenId(String token) { return parse(token).getId(); }
+    public Instant getExpiration(String token) { return parse(token).getExpiration().toInstant(); }
+    public long getAccessTokenValidityInMs() { return accessTokenValidityInMs; }
+
+    public boolean validateToken(String token, String expectedType) {
         try {
-            Jws<Claims> claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
-            return !claims.getBody().getExpiration().before(new Date());
-        } catch (JwtException | IllegalArgumentException e) {
+            Claims claims = parse(token);
+            return claims.getExpiration() != null
+                    && claims.getExpiration().after(new Date())
+                    && expectedType.equals(claims.get("type", String.class));
+        } catch (JwtException | IllegalArgumentException ex) {
             return false;
         }
     }
 
     public String getUsernameFromToken(String token) {
-        Claims claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
-        return claims.getSubject();
+        return parse(token).getSubject();
     }
 
     public Set<String> getRolesFromToken(String token) {
-        Claims claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
-        String roles = claims.get("roles", String.class);
-        if (roles == null || roles.isBlank()) return Set.of();
-        return Set.of(roles.split(",
+        Object roles = parse(token).get("roles");
+        if (!(roles instanceof List<?> roleList)) return Set.of();
+        return roleList.stream().filter(String.class::isInstance).map(String.class::cast).collect(java.util.stream.Collectors.toUnmodifiableSet());
+    }
+
+    private Claims parse(String token) {
+        return Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
+    }
+}

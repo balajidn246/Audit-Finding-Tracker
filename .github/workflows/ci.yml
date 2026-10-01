@@ -1,0 +1,71 @@
+name: Build and verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verityops-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend build and tests (Java 25)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+      - name: Compile and run backend tests
+        working-directory: backend
+        run: mvn --batch-mode --no-transfer-progress verify
+
+  frontend:
+    name: Frontend build and dependency audit (Node 22)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install locked dependencies
+        working-directory: frontend
+        run: npm ci --no-audit
+      - name: Audit production dependency tree
+        working-directory: frontend
+        run: npm audit --audit-level=high
+      - name: Type-check and build frontend
+        working-directory: frontend
+        run: npm run build
+
+  deployment-config:
+    name: Validate deployment configuration
+    runs-on: ubuntu-latest
+    env:
+      DB_PASSWORD: ci-configuration-check-only
+      REDIS_PASSWORD: ci-configuration-check-only
+      JWT_SECRET: ci-configuration-check-only-secret-material-at-least-32-bytes
+      INITIAL_ADMIN_USERNAME: ci-admin
+      INITIAL_ADMIN_EMAIL: ci-admin@example.invalid
+      INITIAL_ADMIN_PASSWORD: ci-configuration-check-only-password
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Validate Docker Compose model
+        run: docker compose config --quiet

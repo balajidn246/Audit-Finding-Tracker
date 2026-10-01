@@ -1,256 +1,108 @@
-# Audit Finding Tracker
+# VerityOps
 
-Audit Finding Tracker is a capstone project for managing audit findings with a Spring Boot backend, an AI service, and a React frontend.
+**Enterprise Audit, Risk & Remediation Management Platform**
 
-The project provides a production-style starting point that you can run locally with Docker Compose and extend with your own business features.
+VerityOps is a self-hosted application for documenting control findings, assigning remediation ownership, tracking work through independent validation, and preserving an append-only activity history. It is designed for internal audit, security assurance, and compliance teams that need a clear record of issue ownership and disposition.
 
-## What is included
+> Deployment status: development release. The source includes a hardened local Docker Compose baseline and security controls, but a production launch still requires an organization-specific security assessment, external TLS ingress, configured backups and restore drills, scanner freshness monitoring, alerting, and operational ownership. Do not put regulated or sensitive organizational data into an unreviewed deployment.
 
-- **Backend:** Spring Boot 3, Java 17, JWT authentication, security configuration, entities, repositories, and services
-- **AI service:** Flask service with health checks, streaming support, caching, and embedding placeholders
-- **Frontend:** React + Vite application with a Tailwind-ready structure
-- **Database:** PostgreSQL with Flyway migrations
-- **Caching:** Redis
-- **Development environment:** Docker Compose configuration for all services
-- **Security:** `SECURITY.md` with security guidance
+## Current capabilities
 
-## Project structure
+- Spring Boot API with Java 25 LTS, PostgreSQL, Flyway migrations, Redis-backed authentication throttling, and OpenAPI documentation.
+- React and TypeScript workspace with sign-in, findings register, status filters, dashboard counts, new finding form, owner assignment, detail view, remediation transitions, risk-acceptance reason, and audit-history display.
+- Role-based API access (`ADMIN`, `MANAGER`, `VIEWER`), safe user summaries, database-authoritative roles, bootstrap administrator creation, and viewer-only self-registration when explicitly enabled (disabled by default).
+- Short-lived bearer access tokens held in memory; rotating refresh tokens are stored only as hashes in PostgreSQL and delivered through an HttpOnly, SameSite cookie. Logout revokes the current refresh session.
+- Finding changes and status transitions are recorded as audit events in the same database transaction; database trigger prevents updating or deleting audit rows.
+- OWASP Top 10:2025-oriented security baseline, security headers, strict CORS configuration, request validation, rate limiting, private container networks, non-root runtime images, and secret-based production configuration.
+- Evidence upload for PDF/PNG/JPEG with strict size/signature checks, ClamAV scanning (fail closed when unavailable), private generated-name storage, SHA-256 metadata, restricted download, and finding-history events. Finding closure requires clean evidence and an independent reviewer.
+- Risk acceptances require a reason and future expiry date; a scheduled job reopens expired acceptances and records a system audit event.
+- Optional owner email notifications use a database outbox written in the same transaction as finding changes, with deduplication, bounded exponential retry, and terminal failure state. SMTP remains disabled until explicitly configured.
+- Manager-only CSV register export with filter support, spreadsheet-formula injection mitigation, bounded output, and export audit events.
+- Health and Prometheus metrics endpoints on the backend. Public frontend proxy blocks actuator access.
 
-```text
-backend/            Spring Boot API
-ai-service/         Flask AI microservice
-frontend/           React + Vite frontend
-uploads/            File upload directory
-docker-compose.yml  Local development environment
-.env.example        Example environment configuration
-SECURITY.md         Security guidance
-```
+## Workflow and roles
 
-## Planned features
+1. An administrator bootstraps the first account and provisions team accounts.
+2. An administrator or manager creates a finding with severity, source, business unit, due date, and owner.
+3. The owner moves the finding into remediation and requests validation.
+4. A manager or administrator validates and closes it, sends it back for rework, or records a risk acceptance reason.
+5. Finding changes and actor identity are available in the history view.
 
-The following features are planned or are still being completed:
+API authorization is the enforcement boundary; frontend visibility is not treated as authorization. A finding owner can update their remediation response and permitted status, while management-only details remain restricted.
 
-- Audit finding CRUD APIs
-- Redis caching annotations
-- File upload API
-- Email templates and scheduled notifications
-- Audit logging service
-- AI RAG pipeline, Groq integration, and ChromaDB persistence
-- Frontend pages and backend API integration
-- Comprehensive backend and frontend tests
-- Additional production security hardening
+## Technology choices
 
-## Quick start with Docker
+- **Backend:** Java 25 LTS with Spring Boot 3.5. Chosen for long-term support, mature security and transactional tooling, broad hiring availability, and stable enterprise operations.
+- **Frontend:** TypeScript + React. Types catch API/model drift, while React has a large ecosystem and long-lived browser support.
+- **Data:** PostgreSQL is the system of record; Redis supports shared rate-limit counters.
+- **AI:** AI is intentionally disabled and not in the authorization, evidence, or remediation path. Consider AI only for opt-in summarization after privacy review, with human verification and no automatic disposition.
 
-### Prerequisites
+## Run locally with Docker Compose
 
-Make sure you have the following installed:
+Prerequisites: Docker Desktop/Engine with Compose v2, 4 GB RAM, and a modern browser.
 
-- Git
-- Docker Desktop or Docker Engine with Docker Compose
-- At least 4 GB of memory available to Docker
+1. Copy `.env.example` to `.env`.
+2. Replace `DB_PASSWORD`, `REDIS_PASSWORD`, and `JWT_SECRET` with unique secrets. Set the bootstrap admin username, email, and password; use at least 16 characters for that password.
+3. Run `docker compose up --build -d`.
+4. Open `http://localhost:3000` and sign in using the bootstrap account.
+5. Check service status with `docker compose ps` and backend health at `http://localhost:3000/healthz`.
 
-### 1. Clone the repository
+The Postgres and Redis ports are not published to the host. Their data persists in named volumes. The first administrator is created only when the database contains no users; changing bootstrap environment values later does not alter existing accounts. The supplied `.env.example` credentials are local-development values and must never be used for a shared deployment.
 
-```bash
-git clone https://github.com/balajidn246/Audit-Finding-Tracker.git
-cd Audit-Finding-Tracker
-```
+### Frontend development mode
 
-### 2. Create your environment file
+Run the backend and its dependencies, then in `frontend/` run `npm ci` followed by `npm run dev`. Vite proxies `/api` to `http://localhost:8080`. The normal build command runs TypeScript checks and produces static assets.
 
-```bash
-cp .env.example .env
-```
+## Automated verification
 
-Open `.env` and configure the values you need:
+GitHub Actions runs `mvn verify` with Java 25, checks the frontend with Node 22, `npm audit`, TypeScript, and a production Vite build, and validates the Docker Compose model on pushes and pull requests to `main`. Run the same commands locally from `backend/` and `frontend/` before release.
 
-- `JWT_SECRET` — a strong secret with at least 32 bytes
-- `DB_USERNAME` and `DB_PASSWORD` — database credentials, if different from the defaults
-- `MAIL_*` — required only if you want email functionality
-- `GROQ_API_KEY` — required only if you enable Groq integration
+## Configuration
 
-Generate a secure JWT secret with:
-
-```bash
-openssl rand -base64 48 | tr -d '\n' && echo
-```
-
-Copy the generated value into `.env`:
-
-```env
-JWT_SECRET=your-generated-secret
-```
-
-### 3. Start all services
-
-```bash
-docker compose up --build
-```
-
-This starts the backend, frontend, AI service, PostgreSQL, and Redis.
-
-## Service URLs
-
-| Service | URL |
+| Variable | Purpose |
 | --- | --- |
-| Backend API | `http://localhost:8080` |
-| Swagger UI | `http://localhost:8080/swagger-ui.html` |
-| AI service | `http://localhost:5000` |
-| Frontend | `http://localhost:3000` |
+| `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD` | PostgreSQL connection |
+| `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD` | Shared login/register/refresh throttling |
+| `JWT_SECRET` | Signing secret; at least 32 bytes of unpredictable material |
+| `INITIAL_ADMIN_USERNAME`, `INITIAL_ADMIN_EMAIL`, `INITIAL_ADMIN_PASSWORD` | First account only, on an empty database |
+| `REFRESH_COOKIE_SECURE` | Set `true` behind HTTPS; keep `false` only for local HTTP development |
+| `SECURITY_REGISTRATION_ENABLED` | Public viewer registration; disabled unless explicitly enabled |
+| `CORS_ALLOWED_ORIGINS` | Exact allowed browser origins; no wildcard origins |
+| `DB_POOL_MAX`, `DB_POOL_MIN` | Hikari connection pool bounds |
+| `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD` | SMTP delivery for owner notifications when enabled |
+| `FILES_UPLOAD_DIR` | Private evidence-storage path (uploads are not exposed through a public static route) |
+| `NOTIFICATIONS_ENABLED` | Set `true` after configuring authenticated SMTP to enable owner notification delivery |
+| `NOTIFICATIONS_FROM`, `APP_PUBLIC_URL` | Verified sender address and canonical app URL used in notifications |
 
-Check the services:
+## API overview
 
-```bash
-curl http://localhost:8080/api/auth/ping
-curl http://localhost:5000/health
-```
+- `POST /api/auth/login`, `/api/auth/refresh`, `/api/auth/logout`
+- `GET /api/findings`, `GET /api/findings/{uuid}`, `POST /api/findings`, `PUT /api/findings/{uuid}`
+- `PATCH /api/findings/{uuid}/status`, `GET /api/findings/{uuid}/history`, `GET /api/findings/stats`
+- `GET /api/findings/report.csv` (manager/admin export), `/api/findings/{uuid}/evidence` (authorized upload/list/download)
+- `GET/POST /api/admin/users`
+- `GET /api/admin/notifications` and `POST /api/admin/notifications/{id}/retry` (delivery health and failed-message retry)
+- OpenAPI UI at `/swagger-ui.html` and API spec at `/api-docs` on the private backend service; do not expose them publicly without an authenticated gateway
 
-## Run services without Docker
+## Security and threat model
 
-### Backend
+See [`docs/security/SECURITY-BASELINE.md`](docs/security/SECURITY-BASELINE.md) for the OWASP Top 10:2025 mapping, ASVS/WSTG verification references, and an ATT&CK-informed threat model. OWASP categories guide web-app controls; MITRE ATT&CK describes adversary behavior and is used to reason about realistic threats, not as a compliance certification.
 
-```bash
-cd backend
-./mvnw clean package -DskipTests
-java -jar target/audit-finding-tracker-1.0.0.jar
-```
+Report suspected vulnerabilities using the private process described in [`SECURITY.md`](SECURITY.md). Never include real customer evidence or credentials in issue reports.
 
-Run backend tests:
+## Operations and recovery
 
-```bash
-./mvnw test
-```
+Before a production deployment, configure infrastructure TLS, external secret management, durable encrypted backups, point-in-time recovery, restore drills, log retention, Prometheus scraping and alert rules, dependency/container scanning, and an incident owner. Keep Postgres and Redis private. Restrict and encrypt the evidence volume. Rotate secrets through a documented change procedure.
 
-### AI service
+The Compose volumes are persistence, not backups. See [`docs/operations/RECOVERY.md`](docs/operations/RECOVERY.md) for the backup/restore runbook and the pre-production checks. A restore must be tested on an isolated environment before production use.
 
-```bash
-cd ai-service
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-python app.py
-```
+## Product gaps to close before general availability
 
-> `sentence-transformers` may download models and require additional disk space and memory.
-
-### Frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Vite will display the local development URL, usually `http://localhost:5173`.
-
-For local API calls, set this value in the frontend environment file:
-
-```env
-VITE_API_BASE_URL=http://localhost:8080/api
-```
-
-## API examples
-
-The examples below assume that the backend is running. Replace `<token>` with the `accessToken` returned by the login request.
-
-### Register a user
-
-```bash
-curl -X POST http://localhost:8080/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"username":"admin2","email":"a2@example.com","password":"ComplexP@ss123"}'
-```
-
-### Log in
-
-```bash
-curl -X POST http://localhost:8080/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"admin2","password":"ComplexP@ss123"}'
-```
-
-### Create an audit finding
-
-```bash
-curl -X POST http://localhost:8080/api/findings \
-  -H "Authorization: Bearer <token>" \
-  -H "Content-Type: application/json" \
-  -d '{"title":"Example","description":"Desc"}'
-```
-
-### Generate an AI description
-
-```bash
-curl -X POST http://localhost:5000/describe \
-  -H "Content-Type: application/json" \
-  -d '{"text":"Some finding text"}'
-```
-
-## Troubleshooting
-
-### PostgreSQL reports a `gen_random_uuid()` error
-
-Enable the PostgreSQL `pgcrypto` extension:
-
-```bash
-docker compose exec postgres psql \
-  -U ${DB_USERNAME:-postgres} \
-  -d ${DB_NAME:-aft} \
-  -c "CREATE EXTENSION IF NOT EXISTS pgcrypto;"
-```
-
-Restart the backend afterward:
-
-```bash
-docker compose restart backend
-```
-
-### View service logs
-
-```bash
-docker compose logs -f backend
-docker compose logs -f ai-service
-```
-
-### Common problems
-
-- **Flyway fails:** Check database variables and enable the `pgcrypto` extension.
-- **Docker runs out of memory:** Increase Docker memory or build the backend locally.
-- **File uploads fail:** Make sure the `./uploads` directory is writable.
-- **AI service uses too much memory:** Use a smaller sentence-transformer model or assign more resources to Docker.
-
-## Security and production checklist
-
-Before deploying to production:
-
-- Store `JWT_SECRET` and other credentials in a secret manager.
-- Never commit secrets to Git.
-- Use HTTPS behind a reverse proxy or load balancer.
-- Implement refresh-token rotation and revocation.
-- Add malware scanning for uploaded files.
-- Run dependency scanning with tools such as Dependabot or Snyk.
-- Perform security testing for file uploads, authentication, AI endpoints, and prompt injection.
-
-Read `SECURITY.md` for more information.
-
-## CI / GitHub Actions
-
-A GitHub Actions workflow can be added to:
-
-- Build the backend
-- Run unit tests
-- Build Docker images
-- Run optional integration tests
-
-## Contributing
-
-1. Create a feature branch.
-2. Make your changes.
-3. Run the relevant tests.
-4. Update the documentation when behavior changes.
-5. Open a pull request with a clear description.
+- Scheduled due-date reminders, a full notification management screen, and SSO/MFA are planned integrations, not current capabilities.
+- Define customer/tenant isolation, configurable retention and legal hold, and administrator role-change audit events before multi-team or multi-customer deployment.
+- Configure deployment-specific metrics dashboards/alerts, structured log collection, SBOM generation, automated dependency/container scanning, and a restore exercise.
+- Complete independent penetration testing and an ASVS verification pass against the target hosting environment.
 
 ## License
 
-No license has been specified yet. Add a license file before distributing or reusing this project publicly.
+No open-source license is declared. Obtain authorization from the repository owner before redistributing or offering the source as a hosted service.

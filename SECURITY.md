@@ -1,30 +1,11 @@
-# SECURITY.md
+# Security policy
 
-Threat model
-- Users: ADMIN, MANAGER, VIEWER
-- Assets: Audit findings, attachments, user credentials, AI documents, reports
-- Adversaries: Malicious users, external attackers, supply-chain attacks
+## Reporting
 
-Top vulnerabilities and mitigations
-- Injection (SQL/OS/LDAP): Use parameterized queries, JPA with parameters, input validation, ORM
-- Broken Authentication: JWT with secure signing, short-lived access tokens, refresh tokens, rotate secrets
-- Sensitive Data Exposure: Encrypt secrets at rest, use TLS, do not store tokens in localStorage in production
-- XSS: Escape output, set Content-Security-Policy headers, use frameworks that auto-escape
-- CSRF: APIs are stateless and use Authorization header for JWT; avoid storing tokens in cookies
-- Insecure Deserialization: Do not trust serialized inputs, validate types, use safe parsers
-- Using Components with Known Vulnerabilities: Keep dependencies updated
-- Insufficient Logging & Monitoring: Audit logs, alerts for suspicious activity
+Do not report vulnerabilities in public issues. Contact the repository owner privately with a concise reproduction, affected commit/version, impact, and suggested mitigation. Do not include real audit records, evidence files, secrets, or personal data. Coordinate disclosure and remediation timing with the maintainer.
 
-OWASP Mapping
-- A1 Injection -> SQL prepared statements, JPA
-- A2 Broken Authentication -> JWT best practices
-- A3 Sensitive Data Exposure -> TLS, encryption
-- A7 XSS -> CSP, escaping
-- A9 Using Components with Known Vulnerabilities -> Dependency management
+## Security posture
 
-Testing checklist
-- Automated scans (Snyk, Dependabot) enabled
-- Unit/integration tests for auth and RBAC
-- Fuzzing inputs to AI endpoints
-- Manual pen-test on login, file upload, and AI endpoints
+The security architecture, OWASP Top 10:2025 mapping, and ATT&CK-informed threat scenarios are documented in [`docs/security/SECURITY-BASELINE.md`](docs/security/SECURITY-BASELINE.md). Operational backup and recovery expectations are in [`docs/operations/RECOVERY.md`](docs/operations/RECOVERY.md).
 
+The application is a development release and has not been independently penetration-tested or certified. Production operators must configure TLS, secret management, encrypted off-host backups, monitoring and alerting, dependency/image scanning, log retention, malware-signature freshness, and a tested recovery process. See the product gaps and release gate in the README and security baseline before storing organizational data.

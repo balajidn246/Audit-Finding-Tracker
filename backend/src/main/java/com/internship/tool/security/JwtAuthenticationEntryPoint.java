@@ -22,7 +22,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         Map<String, Object> body = new HashMap<>();
         body.put("status", HttpServletResponse.SC_UNAUTHORIZED);
         body.put("error", "Unauthorized");
-        body.put("message", authException == null ? "Unauthorized" : authException.getMessage());
+        body.put("message", "Authentication is required");
         response.getWriter().write(new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(body));
     }
 }

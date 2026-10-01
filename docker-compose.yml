@@ -1,69 +1,118 @@
-version: '3.8'
 services:
   postgres:
-    image: postgres:15
+    image: postgres:17-alpine
     environment:
-      POSTGRES_DB: ${DB_NAME:-aft}
-      POSTGRES_USER: ${DB_USERNAME:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-verityops}
+      POSTGRES_USER: ${DB_USERNAME:-verityops}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres}" ]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-verityops} -d ${DB_NAME:-verityops}"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 15s
+    restart: unless-stopped
+    networks:
+      - data
 
   redis:
-    image: redis:7
-    ports:
-      - "6379:6379"
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}"]
+    environment:
+      REDISCLI_AUTH: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
+    volumes:
+      - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
-      timeout: 5s
-      retries: 5
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - data
+
+  clamav:
+    image: clamav/clamav:1.4
+    volumes:
+      - clamav_data:/var/lib/clamav
+    mem_limit: 1200m
+    restart: unless-stopped
+    networks: [scanner]
 
   backend:
     build:
       context: ./backend
-    depends_on:
-      - postgres
-      - redis
-      - ai-service
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
-      DB_NAME: ${DB_NAME:-aft}
-      DB_USERNAME: ${DB_USERNAME:-postgres}
-      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_NAME: ${DB_NAME:-verityops}
+      DB_USERNAME: ${DB_USERNAME:-verityops}
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
       REDIS_HOST: redis
-      JWT_SECRET: ${JWT_SECRET}
-    ports:
-      - "8080:8080"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/api/auth/ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  ai-service:
-    build:
-      context: ./ai-service
-    ports:
-      - "5000:5000"
-    environment:
-      - CHROMA_DB_PATH=/data/chroma
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
+      CLAMAV_HOST: clamav
+      NOTIFICATIONS_ENABLED: ${NOTIFICATIONS_ENABLED:-false}
+      MAIL_HOST: ${MAIL_HOST:-localhost}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      NOTIFICATIONS_FROM: ${NOTIFICATIONS_FROM:-verityops@localhost}
+      APP_PUBLIC_URL: ${APP_PUBLIC_URL:-http://localhost:3000}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      INITIAL_ADMIN_USERNAME: ${INITIAL_ADMIN_USERNAME:-}
+      INITIAL_ADMIN_EMAIL: ${INITIAL_ADMIN_EMAIL:-}
+      INITIAL_ADMIN_PASSWORD: ${INITIAL_ADMIN_PASSWORD:-}
+      REFRESH_COOKIE_SECURE: ${REFRESH_COOKIE_SECURE:-false}
+      SECURITY_REGISTRATION_ENABLED: ${SECURITY_REGISTRATION_ENABLED:-false}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:5173}
+      FILES_UPLOAD_DIR: /var/verityops/evidence
     volumes:
-      - ./ai-service/chroma_data:/data/chroma
+      - evidence_data:/var/verityops/evidence
+    depends_on:
+      clamav:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    expose:
+      - "8080"
+    ports:
+      - "127.0.0.1:18080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:8080/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 45s
+    restart: unless-stopped
+    networks:
+      - application
+      - data
+      - scanner
 
   frontend:
     build:
       context: ./frontend
     ports:
-      - "3000:3000"
-    environment:
-      - VITE_API_BASE_URL=http://localhost:8080/api
+      - "127.0.0.1:${FRONTEND_PORT:-3000}:8080"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - application
 
 volumes:
   db_data:
+  redis_data:
+  evidence_data:
+  clamav_data:
+
+networks:
+  application:
+  data:
+    internal: true
+  scanner:

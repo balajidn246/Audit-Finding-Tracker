@@ -18,7 +18,7 @@ public class AuthDtos {
         public String email;
 
         @NotBlank
-        @Size(min = 8, max = 100)
+        @Size(min = 12, max = 100)
         public String password;
 
         public Set<String> roles;
@@ -34,6 +34,7 @@ public class AuthDtos {
 
     public static class TokenResponse {
         public String accessToken;
+        @com.fasterxml.jackson.annotation.JsonIgnore
         public String refreshToken;
         public long expiresInMs;
         public String tokenType = "Bearer";

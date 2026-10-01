@@ -1,23 +1,22 @@
 {
-  "name": "audit-finding-tracker-frontend",
+  "name": "verityops-frontend",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "tsc --noEmit && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "axios": "1.4.0",
-    "recharts": "2.5.0",
-    "tailwindcss": "3.5.0",
-    "clsx": "1.2.1",
-    "react-router-dom": "6.11.2"
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
   },
   "devDependencies": {
-    "vite": "5.0.0",
-    "@vitejs/plugin-react": "4.0.0"
+    "vite": "8.1.0",
+    "typescript": "5.9.3",
+    "@types/react": "19.2.0",
+    "@types/react-dom": "19.2.0",
+    "@vitejs/plugin-react": "6.1.1"
   }
 }
